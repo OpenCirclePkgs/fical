@@ -21,8 +21,8 @@
                 <h1 class="display-4 fw-bold lh-1 mb-3">Simple iCal filtering</h1>
                 <p class="col-lg-10 fs-4">Filter unwanted iCal events.</p>
                 <p class="col-lg-10 fs-4">On the right side enter the calendar subscription URL, then enter which words
-                    are allowed to be in the event names, everything else will be filtered out,
-                    and subscribe the newly generated URL in your calendar app.</p>
+                    are allowed to be in the event names and optionally which ones should be blocked, and subscribe the
+                    newly generated URL in your calendar app.</p>
             </div>
             <div class="col-md-10 mx-auto col-lg-5">
                 <form class="p-4 p-md-5 border rounded-3 bg-light">
@@ -30,9 +30,14 @@
                         <input type="url" class="form-control" id="calurl" oninput="onInputHandler()">
                         <label for="calurl">Calendar URL</label>
                     </div>
+                     <div class="form-floating mb-3">
+                         <input type="text" class="form-control" id="allowlist" oninput="onInputHandler()">
+                         <label for="allowlist">Allowlist</label>
+                         <small class="text-muted">Use comma to separate multiple filters</a></small>
+                     </div>
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="allowlist" oninput="onInputHandler()">
-                        <label for="allowlist">Allowlist</label>
+                        <input type="text" class="form-control" id="blacklist" oninput="onInputHandler()">
+                        <label for="blacklist">Blacklist (optional)</label>
                         <small class="text-muted">Use comma to separate multiple filters</a></small>
                     </div>
                     <hr class="my-4">
@@ -52,10 +57,9 @@
             <div class="col-lg-7 text-center text-lg-start">
                 <p class="col-lg-6 fs-4">How does it work?</p>
                 <p class="lead text-muted">On every request the remote iCal file is fetched directly from the remote
-                    server and parsed, after that the calendar is returned as-is with only events that don't contain any
-                    of the specified words in the event name filtered out. All the data about the request is stored in
-                    the URL and
-                    is never stored on the server</p>
+                    server and parsed, after that the calendar is returned as-is with only events that match the allowed
+                    keywords and do not contain any of the blocked words. All the data about the request is stored in
+                    the URL and is never stored on the server</p>
                 <p class="lead text-muted">The code is open source under MIT license and available on <a
                         href="https://github.com/nikolak/fical">GitHub</a></p>
             </div>
@@ -74,9 +78,15 @@
     function onInputHandler() {
         calurlstr = document.getElementById('calurl').value
         allowliststr = document.getElementById('allowlist').value
+        blackliststr = document.getElementById('blacklist').value
 
         if (calurlstr && allowliststr) {
-            newURL = window.location.origin + "/calendar/" + base64ToBase64url(btoa(calurlstr)) + "/" + base64ToBase64url(btoa(allowliststr)) + "/filtered.ics"
+            baseURL = window.location.origin + "/calendar/" + base64ToBase64url(btoa(calurlstr)) + "/" + base64ToBase64url(btoa(allowliststr))
+            if (blackliststr) {
+                newURL = baseURL + "/" + base64ToBase64url(btoa(blackliststr)) + "/filtered.ics"
+            } else {
+                newURL = baseURL + "/filtered.ics"
+            }
         } else {
             newURL = ""
         }

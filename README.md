@@ -4,8 +4,9 @@ Simple filtering service for remote iCal calendars (fiCal = filter iCal, very cr
 
 _Very_ simple application that provides a simple one page web interface for convenience.
 
-It allows inputting remote ical URL, and then a list of keywords. Then it fetches the remote ical and filters out
-all events that do not have any of the keywords in the event name. Basically it acts as a proxy between the client and the server
+It allows inputting remote ical URL, a list of allowlisted keywords, and optionally a list of blacklisted keywords.
+Then it fetches the remote ical and filters out all events that do not have any of the allowlisted keywords in the
+event name or that contain any of the blacklisted keywords. Basically it acts as a proxy between the client and the server
 and it filters out events before handing over data to the client.
 
 I wrote this because our company uses personio.com, which is absolute trash when it comes to calendar. Exporting "My Calendar"
