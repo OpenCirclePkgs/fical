@@ -4,6 +4,7 @@ import requests
 from ics import Calendar
 import base64
 import binascii
+import re
 import ipaddress
 import socket
 from urllib.parse import urlparse
@@ -11,6 +12,23 @@ from urllib.parse import urlparse
 app = FastAPI()
 REQUEST_TIMEOUT = 30
 EMPTY_ALLOWLIST_TOKEN = "__empty_allowlist__"
+_BASE64URL_PATTERN = re.compile(r"^[A-Za-z0-9_-]*$")
+
+
+def _decode_b64url_param(encoded_value: str, param_name: str) -> str:
+    if not _BASE64URL_PATTERN.fullmatch(encoded_value):
+        raise HTTPException(status_code=400, detail=f"Invalid base64 data for {param_name}.")
+
+    # Base64 strings must be padded to a length divisible by 4
+    padded_value = encoded_value + "=" * (-len(encoded_value) % 4)
+    try:
+        raw_bytes = base64.urlsafe_b64decode(padded_value)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 data for {param_name}.") from exc
+    try:
+        return raw_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"{param_name} must be valid UTF-8.") from exc
 
 
 def _is_private_host(hostname: str) -> bool:
@@ -34,12 +52,9 @@ def index():
 
 @app.get("/calendar/{b64url}/{b64allowlist}/filtered.ics")
 async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query(default="")):
-    try:
-        raw_url = base64.urlsafe_b64decode(b64url).decode("utf-8")
-        allowlist_raw = base64.urlsafe_b64decode(b64allowlist).decode("utf-8")
-        blocklist_raw = base64.urlsafe_b64decode(b64blocklist).decode("utf-8") if b64blocklist else ""
-    except (binascii.Error, UnicodeDecodeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid base64 data.")
+    raw_url = _decode_b64url_param(b64url, "calendar URL")
+    allowlist_raw = _decode_b64url_param(b64allowlist, "allowlist")
+    blocklist_raw = _decode_b64url_param(b64blocklist, "blocklist") if b64blocklist else ""
 
     allowlist = [
         w.strip() for w in allowlist_raw.split(",") if w.strip() and w.strip() != EMPTY_ALLOWLIST_TOKEN
