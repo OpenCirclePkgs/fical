@@ -4,6 +4,7 @@ import requests
 from ics import Calendar
 import base64
 import binascii
+import re
 import ipaddress
 import socket
 from urllib.parse import urlparse
@@ -11,12 +12,17 @@ from urllib.parse import urlparse
 app = FastAPI()
 REQUEST_TIMEOUT = 30
 EMPTY_ALLOWLIST_TOKEN = "__empty_allowlist__"
+_BASE64URL_PATTERN = re.compile(r"^[A-Za-z0-9_-]*$")
 
 
 def _decode_b64url_param(encoded_value: str, param_name: str) -> str:
+    if not _BASE64URL_PATTERN.fullmatch(encoded_value):
+        raise HTTPException(status_code=400, detail=f"Invalid base64 data for {param_name}.")
+
+    # Base64 strings must be padded to a length divisible by 4
     padded_value = encoded_value + "=" * (-len(encoded_value) % 4)
     try:
-        raw_bytes = base64.b64decode(padded_value, altchars=b"-_", validate=True)
+        raw_bytes = base64.urlsafe_b64decode(padded_value)
     except (binascii.Error, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"Invalid base64 data for {param_name}.") from exc
     try:
