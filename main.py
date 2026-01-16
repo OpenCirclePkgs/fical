@@ -65,7 +65,7 @@ async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query
 
     try:
         cal = Calendar(remote_cal)
-    except Exception:
+    except ValueError:
         raise HTTPException(status_code=400, detail="Server response not a valid ics format.")
 
     valid_events = []
