@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 import requests
 from ics import Calendar
-from ics.parse import ParseError
 import base64
 import binascii
 import ipaddress
@@ -66,10 +65,8 @@ async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query
 
     try:
         cal = Calendar(remote_cal)
-    except ParseError:
+    except Exception:
         raise HTTPException(status_code=400, detail="Server response not a valid ics format.")
-    except:
-        raise HTTPException(status_code=500, detail="Error while parsing calendar contents.")
 
     valid_events = []
     for c in cal.events:

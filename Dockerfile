@@ -6,8 +6,5 @@ COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY ./prestart.sh /app/prestart.sh
-RUN chmod +x /app/prestart.sh
-
 COPY ./main.py /app
 COPY ./index.html /app
