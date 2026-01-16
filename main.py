@@ -1,12 +1,14 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 import requests
 from ics import Calendar
 from ics.parse import ParseError
 import base64
+import binascii
 
 app = FastAPI()
 REQUEST_TIMEOUT = 30
+EMPTY_ALLOWLIST_TOKEN = "__empty_allowlist__"
 
 
 @app.get("/")
@@ -15,16 +17,18 @@ def index():
 
 
 @app.get("/calendar/{b64url}/{b64allowlist}/filtered.ics")
-@app.get("/calendar/{b64url}/{b64allowlist}/{b64blocklist}/filtered.ics")
-async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = ""):
+async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query(default="")):
     try:
         url = base64.urlsafe_b64decode(b64url).decode("utf-8")
-        allowlist = [w.strip() for w in base64.urlsafe_b64decode(b64allowlist).decode("utf-8").split(",") if w.strip()]
-        blocklist = []
-        if b64blocklist:
-            blocklist = [w.strip() for w in base64.urlsafe_b64decode(b64blocklist).decode("utf-8").split(",") if w.strip()]
-    except:
+        allowlist_raw = base64.urlsafe_b64decode(b64allowlist).decode("utf-8")
+        blocklist_raw = base64.urlsafe_b64decode(b64blocklist).decode("utf-8") if b64blocklist else ""
+    except (binascii.Error, UnicodeDecodeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid base64 data.")
+
+    allowlist = [
+        w.strip() for w in allowlist_raw.split(",") if w.strip() and w.strip() != EMPTY_ALLOWLIST_TOKEN
+    ]
+    blocklist = [w.strip() for w in blocklist_raw.split(",") if w.strip()] if blocklist_raw else []
 
     try:
         remote_cal = requests.get(url, timeout=REQUEST_TIMEOUT).text

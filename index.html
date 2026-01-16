@@ -32,13 +32,13 @@
                     </div>
                      <div class="form-floating mb-3">
                          <input type="text" class="form-control" id="allowlist" oninput="onInputHandler()">
-                         <label for="allowlist">Allowlist</label>
-                         <small class="text-muted">Use comma to separate multiple filters</a></small>
-                     </div>
+                        <label for="allowlist">Allowlist</label>
+                        <small class="text-muted">Use comma to separate multiple filters</small>
+                    </div>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" id="blacklist" oninput="onInputHandler()">
                         <label for="blacklist">Blacklist (optional)</label>
-                        <small class="text-muted">Use comma to separate multiple filters</a></small>
+                        <small class="text-muted">Use comma to separate multiple filters</small>
                     </div>
                     <hr class="my-4">
                     <div class="form-floating mb-3">
@@ -75,20 +75,22 @@
 
 <script>
 
-    function onInputHandler() {
-        calurlstr = document.getElementById('calurl').value
-        allowliststr = document.getElementById('allowlist').value
-        blackliststr = document.getElementById('blacklist').value
+    const EMPTY_ALLOWLIST_TOKEN = "__empty_allowlist__"
 
-        if (calurlstr && allowliststr) {
-            baseURL = window.location.origin + "/calendar/" + base64ToBase64url(btoa(calurlstr)) + "/" + base64ToBase64url(btoa(allowliststr))
+    function onInputHandler() {
+        const calurlstr = document.getElementById('calurl').value
+        const allowliststr = document.getElementById('allowlist').value
+        const blackliststr = document.getElementById('blacklist').value
+        let newURL = ""
+
+        if (calurlstr && (allowliststr || blackliststr)) {
+            const allowlistEncoded = encodeToBase64url(allowliststr || EMPTY_ALLOWLIST_TOKEN)
+            const baseURL = window.location.origin + "/calendar/" + encodeToBase64url(calurlstr) + "/" + allowlistEncoded + "/filtered.ics"
             if (blackliststr) {
-                newURL = baseURL + "/" + base64ToBase64url(btoa(blackliststr)) + "/filtered.ics"
+                newURL = baseURL + "?b64blocklist=" + encodeToBase64url(blackliststr)
             } else {
-                newURL = baseURL + "/filtered.ics"
+                newURL = baseURL
             }
-        } else {
-            newURL = ""
         }
         document.getElementById("filteredurl").value = newURL
         document.getElementById('copybtn').disabled = !newURL
@@ -110,6 +112,15 @@
         .replace(/\+/g, '_')
         .replace(/\//g, '-')
         .replace(/=+$/g, '');
+    }
+
+    function encodeToBase64url(input) {
+      const bytes = new TextEncoder().encode(input)
+      let binary = ""
+      bytes.forEach((b) => {
+        binary += String.fromCharCode(b)
+      })
+      return base64ToBase64url(btoa(binary));
     }
 
 
