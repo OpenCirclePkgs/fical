@@ -20,9 +20,7 @@
             <div class="col-lg-7 text-center text-lg-start">
                 <h1 class="display-4 fw-bold lh-1 mb-3">Simple iCal filtering</h1>
                 <p class="col-lg-10 fs-4">Filter unwanted iCal events. Load an existing link to edit, or craft new filters below.</p>
-                <p class="col-lg-10 fs-4">On the right side enter the calendar subscription URL, then enter which words
-                    are allowed to be in the event names and optionally which ones should be blocked, and subscribe the
-                    newly generated URL in your calendar app. You can also combine up to 5 calendars with individual filters.</p>
+                <p class="col-lg-10 fs-4">Add one or more calendar subscription URLs with their allow/block filters, then subscribe to the generated link. You can optionally create a short link for the bundle.</p>
             </div>
             <div class="col-md-10 mx-auto col-lg-5">
                 <form class="p-4 p-md-5 border rounded-3 bg-light">
@@ -32,45 +30,33 @@
                         <small class="text-muted">Paste a filtered link to load and edit it</small>
                     </div>
                     <button type="button" class="btn btn-outline-secondary mb-3 w-100" onclick="loadExistingLink()">Load link into editor</button>
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h2 class="h5 mb-0">Calendars (max 5)</h2>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCalendarRow()">Add</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCalendarRow()">Remove last</button>
+                        </div>
+                    </div>
+                    <div id="multi-cal-list" class="mb-3"></div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="multishorten">
+                        <label class="form-check-label" for="multishorten">
+                            Create short link for calendar(s)
+                        </label>
+                    </div>
+                    <button type="button" class="w-100 btn btn-lg btn-success mb-3" onclick="generateCombined()">Generate</button>
                     <div class="form-floating mb-3">
-                        <input type="url" class="form-control" id="calurl" oninput="onInputHandler()">
-                        <label for="calurl">Calendar URL</label>
+                        <input type="url" class="form-control" id="combinedOutput" readonly>
+                        <label for="combinedOutput">Calendar link (short or downloadable)</label>
                     </div>
-                     <div class="form-floating mb-3">
-                         <input type="text" class="form-control" id="allowlist" oninput="onInputHandler()">
-                        <label for="allowlist">Allowlist</label>
-                        <small class="text-muted">Use comma to separate multiple filters</small>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="blacklist" oninput="onInputHandler()">
-                        <label for="blacklist">Blacklist (optional)</label>
-                        <small class="text-muted">Use comma to separate multiple filters</small>
-                    </div>
-                     <hr class="my-4">
-                     <h2 class="h5 mb-3">Combine calendars (max 5)</h2>
-                     <div id="multi-cal-list" class="mb-3"></div>
-                     <div class="d-flex gap-2 mb-3">
-                         <button type="button" class="btn btn-outline-primary" onclick="addCalendarRow()">Add calendar</button>
-                         <button type="button" class="btn btn-outline-danger" onclick="removeCalendarRow()">Remove last</button>
-                     </div>
-                     <div class="form-check mb-3">
-                         <input class="form-check-input" type="checkbox" id="multishorten">
-                         <label class="form-check-label" for="multishorten">
-                             Create short link for calendar(s)
-                         </label>
-                     </div>
-                     <button type="button" class="w-100 btn btn-lg btn-success mb-3" onclick="generateCombined()">Generate</button>
-                     <div class="form-floating mb-3">
-                         <input type="url" class="form-control" id="combinedOutput" readonly>
-                         <label for="combinedOutput">Calendar link (short or downloadable)</label>
-                     </div>
-                     <button type="button" class="btn btn-primary w-100" id="copyCombined" onclick="copyCombined()" disabled>Copy link</button>
-                     <small class="text-muted d-block mt-2">When not using short links a temporary download link is generated for the merged calendar.</small>
-                 </form>
-             </div>
-             <div class="col-lg-7 text-center text-lg-start">
-                 <p class="col-lg-6 fs-4">How does it work?</p>
-                  <p class="lead text-muted">On every request the remote iCal file is fetched directly from the remote
+                    <button type="button" class="btn btn-primary w-100" id="copyCombined" onclick="copyCombined()" disabled>Copy link</button>
+                    <small class="text-muted d-block mt-2">When not using short links a temporary download link is generated for the merged calendar.</small>
+                </form>
+            </div>
+            <div class="col-lg-7 text-center text-lg-start">
+                <p class="col-lg-6 fs-4">How does it work?</p>
+                 <p class="lead text-muted">On every request the remote iCal file is fetched directly from the remote
                       server and parsed, after that the calendar is returned as-is with only events that match the allowed
                       keywords and do not contain any of the blocked words. All the data about the request is stored in
                       the URL and is never stored on the server. If you enable short links, request data is cached
@@ -104,25 +90,27 @@
         try {
             const url = new URL(link)
             const parts = url.pathname.split("/")
-             if (parts.length >= 4 && parts[1] === "calendar") {
-                 const encodedUrl = parts[2]
-                 const encodedAllow = parts[3]
-                 const blockParam = url.searchParams.get("b64blocklist") || ""
-                 document.getElementById("calurl").value = decodeFromBase64url(encodedUrl)
-                 const allowDecoded = decodeFromBase64url(encodedAllow)
-                 document.getElementById("allowlist").value = allowDecoded === EMPTY_ALLOWLIST_TOKEN ? "" : allowDecoded
-                 document.getElementById("blacklist").value = blockParam ? decodeFromBase64url(blockParam) : ""
-                 onInputHandler()
-             } else if (parts.length >= 3 && parts[1] === "s") {
-                 document.getElementById("combinedOutput").value = link
-                 document.getElementById("copyCombined").disabled = false
-             }
+            if (parts.length >= 4 && parts[1] === "calendar") {
+                const encodedUrl = parts[2]
+                const encodedAllow = parts[3]
+                const blockParam = url.searchParams.get("b64blocklist") || ""
+                const allowDecoded = decodeFromBase64url(encodedAllow)
+                addCalendarRow({
+                    url: decodeFromBase64url(encodedUrl),
+                    allowlist: allowDecoded === EMPTY_ALLOWLIST_TOKEN ? "" : allowDecoded,
+                    blocklist: blockParam ? decodeFromBase64url(blockParam) : ""
+                })
+                onInputHandler()
+            } else if (parts.length >= 3 && parts[1] === "s") {
+                document.getElementById("combinedOutput").value = link
+                document.getElementById("copyCombined").disabled = false
+            }
         } catch (e) {
             alert("Could not parse link")
         }
     }
 
-    function addCalendarRow() {
+    function addCalendarRow(prefill = {}) {
         if (multiCalList.length >= MAX_CAL) {
             alert("Maximum of 5 calendars")
             return
@@ -131,20 +119,57 @@
         const container = document.createElement("div")
         container.className = "card p-3 mb-2"
         container.id = `multi-${idx}`
-        container.innerHTML = `
-            <div class="row g-2">
-                <div class="col-md-5">
-                    <input type="url" class="form-control" placeholder="Calendar URL" data-field="url">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="Allowlist (comma)" data-field="allowlist">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="Blocklist (comma)" data-field="blocklist">
-                </div>
-            </div>`
+
+        const row = document.createElement("div")
+        row.className = "row g-2"
+
+        const urlCol = document.createElement("div")
+        urlCol.className = "col-md-5"
+        const urlInput = document.createElement("input")
+        urlInput.type = "url"
+        urlInput.className = "form-control"
+        urlInput.placeholder = "Calendar URL"
+        urlInput.setAttribute("data-field", "url")
+        urlInput.value = prefill.url || ""
+        urlInput.oninput = onInputHandler
+        urlCol.appendChild(urlInput)
+
+        const allowCol = document.createElement("div")
+        allowCol.className = "col-md-3"
+        const allowInput = document.createElement("input")
+        allowInput.type = "text"
+        allowInput.className = "form-control"
+        allowInput.placeholder = "Allowlist (comma)"
+        allowInput.setAttribute("data-field", "allowlist")
+        allowInput.value = prefill.allowlist || ""
+        allowInput.oninput = onInputHandler
+        allowCol.appendChild(allowInput)
+
+        const blockCol = document.createElement("div")
+        blockCol.className = "col-md-3"
+        const blockInput = document.createElement("input")
+        blockInput.type = "text"
+        blockInput.className = "form-control"
+        blockInput.placeholder = "Blocklist (comma)"
+        blockInput.setAttribute("data-field", "blocklist")
+        blockInput.value = prefill.blocklist || ""
+        blockInput.oninput = onInputHandler
+        blockCol.appendChild(blockInput)
+
+        row.appendChild(urlCol)
+        row.appendChild(allowCol)
+        row.appendChild(blockCol)
+
+        container.appendChild(row)
         document.getElementById("multi-cal-list").appendChild(container)
         multiCalList.push(container)
+    }
+
+    function resetCalendarRows() {
+        while (multiCalList.length) {
+            const el = multiCalList.pop()
+            el.remove()
+        }
     }
 
     function removeCalendarRow() {
@@ -160,13 +185,6 @@
 
     async function generateCombined() {
         const payload = {calendars: [], short: document.getElementById("multishorten").checked}
-
-        const mainUrl = document.getElementById('calurl').value.trim()
-        const mainAllow = document.getElementById('allowlist').value.split(",").map(s => s.trim()).filter(Boolean)
-        const mainBlock = document.getElementById('blacklist').value.split(",").map(s => s.trim()).filter(Boolean)
-        if (mainUrl) {
-            payload.calendars.push({url: mainUrl, allowlist: withDefaultAllowlist(mainAllow), blocklist: mainBlock})
-        }
 
         multiCalList.forEach(card => {
             const url = card.querySelector('[data-field="url"]').value.trim()

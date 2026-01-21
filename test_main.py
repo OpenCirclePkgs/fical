@@ -78,6 +78,30 @@ class CalendarTests(unittest.TestCase):
 
     @patch("main._is_private_host", return_value=False)
     @patch("main.requests.get")
+    def test_legacy_endpoint_can_create_short_link(self, mock_get, _):
+        mock_get.return_value.text = ICS_SAMPLE
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["FICAL_DB_PATH"] = os.path.join(tmp, "cache.db")
+            url = _encode_unpadded("https://example.com/calendar.ics")
+            allowlist = _encode_unpadded("测试")
+
+            create_resp = self.client.get(
+                f"/calendar/{url}/{allowlist}/filtered.ics",
+                params={"short": True},
+            )
+            self.assertEqual(create_resp.status_code, 200)
+            short_url = create_resp.json()["short"]
+            key = short_url.rsplit("/", 1)[-1]
+
+            resolve_resp = self.client.get(f"/s/{key}")
+            self.assertEqual(resolve_resp.status_code, 200)
+            self.assertIn("SUMMARY:测试 event", resolve_resp.text)
+
+    @patch("main._is_private_host", return_value=False)
+    @patch("main.requests.get")
     def test_combines_multiple_calendars(self, mock_get, _):
         mock_get.side_effect = [
             type("Resp", (), {"text": ICS_SAMPLE}),
