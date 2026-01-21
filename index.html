@@ -154,6 +154,10 @@
         }
     }
 
+    function withDefaultAllowlist(list) {
+        return list.length ? list : [EMPTY_ALLOWLIST_TOKEN]
+    }
+
     async function generateCombined() {
         const payload = {calendars: [], short: document.getElementById("multishorten").checked}
 
@@ -161,7 +165,7 @@
         const mainAllow = document.getElementById('allowlist').value.split(",").map(s => s.trim()).filter(Boolean)
         const mainBlock = document.getElementById('blacklist').value.split(",").map(s => s.trim()).filter(Boolean)
         if (mainUrl) {
-            payload.calendars.push({url: mainUrl, allowlist: mainAllow.length ? mainAllow : [EMPTY_ALLOWLIST_TOKEN], blocklist: mainBlock})
+            payload.calendars.push({url: mainUrl, allowlist: withDefaultAllowlist(mainAllow), blocklist: mainBlock})
         }
 
         multiCalList.forEach(card => {
@@ -169,7 +173,7 @@
             const allowlist = card.querySelector('[data-field="allowlist"]').value.split(",").map(s => s.trim()).filter(Boolean)
             const blocklist = card.querySelector('[data-field="blocklist"]').value.split(",").map(s => s.trim()).filter(Boolean)
             if (url) {
-                payload.calendars.push({url, allowlist: allowlist.length ? allowlist : [EMPTY_ALLOWLIST_TOKEN], blocklist})
+                payload.calendars.push({url, allowlist: withDefaultAllowlist(allowlist), blocklist})
             }
         })
 
@@ -242,19 +246,21 @@
       return base64ToBase64url(btoa(binary));
     }
 
-     function decodeFromBase64url(input) {
-         let b64 = input.replace(/-/g, "+").replace(/_/g, "/")
-         while (b64.length % 4) {
-             b64 += "="
-         }
-         try {
-             const binary = atob(b64)
-             const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
-             return new TextDecoder().decode(bytes)
-         } catch (_) {
-             return ""
-         }
-     }
+    const sharedTextDecoder = new TextDecoder()
+
+    function decodeFromBase64url(input) {
+        let b64 = input.replace(/-/g, "+").replace(/_/g, "/")
+        while (b64.length % 4) {
+            b64 += "="
+        }
+        try {
+            const binary = atob(b64)
+            const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+            return sharedTextDecoder.decode(bytes)
+        } catch (_) {
+            return ""
+        }
+    }
 
     // initialize with one row
     addCalendarRow()
