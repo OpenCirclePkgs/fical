@@ -75,6 +75,17 @@ def _fetch_calendar_body(safe_url: str) -> str:
         raise HTTPException(status_code=500, detail="Error while fetching calendar contents.")
 
 
+def _normalize_lists(allowlist: Iterable[str], blocklist: Iterable[str]) -> tuple[list[str], list[str]]:
+    norm_allow = [w.strip() for w in allowlist if w.strip() and w.strip() != EMPTY_ALLOWLIST_TOKEN]
+    norm_block = [w.strip() for w in blocklist if w.strip()]
+    return norm_allow, norm_block
+
+
+def _prepare_allowlist_for_normalization(allowlist: Iterable[str]) -> list[str]:
+    prepared = [w or EMPTY_ALLOWLIST_TOKEN for w in allowlist]
+    return prepared or [EMPTY_ALLOWLIST_TOKEN]
+
+
 def _filter_calendar_from_text(cal_text: str, allowlist: Iterable[str], blocklist: Iterable[str]) -> Calendar:
     try:
         cal = Calendar(cal_text)
@@ -83,8 +94,7 @@ def _filter_calendar_from_text(cal_text: str, allowlist: Iterable[str], blocklis
     except Exception:
         raise HTTPException(status_code=500, detail="Error while parsing calendar contents.")
 
-    allowlist = [w.strip() for w in allowlist if w.strip() and w.strip() != EMPTY_ALLOWLIST_TOKEN]
-    blocklist = [w.strip() for w in blocklist if w.strip()]
+    allowlist, blocklist = _normalize_lists(allowlist, blocklist)
 
     valid_events = []
     for c in cal.events:
@@ -175,6 +185,11 @@ def _request_from_payload(payload: str) -> CombinedCalendarRequest:
         data = CombinedCalendarRequest.model_validate_json(raw_json)
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail="Invalid payload data.") from exc
+    for cal in data.calendars:
+        prepared_allowlist = _prepare_allowlist_for_normalization(cal.allowlist)
+        norm_allow, norm_block = _normalize_lists(prepared_allowlist, cal.blocklist)
+        cal.allowlist = norm_allow
+        cal.blocklist = norm_block
     data.short = False
     return data
 
