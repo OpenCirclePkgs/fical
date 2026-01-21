@@ -171,6 +171,8 @@ def index():
 async def combined_calendar(request: CombinedCalendarRequest, req: Request):
     if not request.calendars:
         raise HTTPException(status_code=400, detail="At least one calendar is required.")
+    if len(request.calendars) > 5:
+        raise HTTPException(status_code=400, detail="Maximum of 5 calendars are allowed per request.")
 
     if request.short:
         key = _save_short_payload(request.model_dump_json())
@@ -178,7 +180,7 @@ async def combined_calendar(request: CombinedCalendarRequest, req: Request):
         return {"short": f"{base}/s/{key}"}
 
     cal = _combine_calendars(request.calendars)
-    return Response(content=str(cal), media_type="text/calendar")
+    return Response(content=cal.serialize(), media_type="text/calendar")
 
 
 @app.get("/s/{key}")
@@ -186,7 +188,7 @@ async def resolve_short_link(key: str):
     payload = _load_short_payload(key)
     data = CombinedCalendarRequest.model_validate_json(payload)
     cal = _combine_calendars(data.calendars)
-    return Response(content=str(cal), media_type="text/calendar")
+    return Response(content=cal.serialize(), media_type="text/calendar")
 
 
 @app.get("/calendar/{b64url}/{b64allowlist}/filtered.ics")
@@ -199,4 +201,4 @@ async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query
     blocklist = blocklist_raw.split(",") if blocklist_raw else []
 
     cal = _filtered_calendar_from_url(raw_url, allowlist, blocklist)
-    return Response(content=str(cal), media_type="text/calendar")
+    return Response(content=cal.serialize(), media_type="text/calendar")
