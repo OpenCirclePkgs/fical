@@ -81,6 +81,11 @@ def _normalize_lists(allowlist: Iterable[str], blocklist: Iterable[str]) -> tupl
     return norm_allow, norm_block
 
 
+def _prepare_allowlist_for_normalization(allowlist: Iterable[str]) -> list[str]:
+    prepared = [w or EMPTY_ALLOWLIST_TOKEN for w in allowlist]
+    return prepared or [EMPTY_ALLOWLIST_TOKEN]
+
+
 def _filter_calendar_from_text(cal_text: str, allowlist: Iterable[str], blocklist: Iterable[str]) -> Calendar:
     try:
         cal = Calendar(cal_text)
@@ -181,10 +186,8 @@ def _request_from_payload(payload: str) -> CombinedCalendarRequest:
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail="Invalid payload data.") from exc
     for cal in data.calendars:
-        norm_allow, norm_block = _normalize_lists(
-            [w or EMPTY_ALLOWLIST_TOKEN for w in cal.allowlist] or [EMPTY_ALLOWLIST_TOKEN],
-            cal.blocklist,
-        )
+        prepared_allowlist = _prepare_allowlist_for_normalization(cal.allowlist)
+        norm_allow, norm_block = _normalize_lists(prepared_allowlist, cal.blocklist)
         cal.allowlist = norm_allow
         cal.blocklist = norm_block
     data.short = False
