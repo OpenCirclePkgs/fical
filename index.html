@@ -219,16 +219,6 @@
         }
     }
 
-    function copy() {
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(document.getElementById("filteredurl").value).then(() => {
-                document.getElementById('copybtn').value = "URL Copied!";
-                alert("Copied!")
-            }, (err) => {
-                document.getElementById('copybtn').value = "Failed to copy the text to clipboard."
-            });
-        }
-    }
     function base64ToBase64url(input) {
       // Replace non-url compatible chars with base64url standard chars and remove leading =
       return input
