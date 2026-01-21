@@ -11,63 +11,176 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+        .header-section {
+            background-color: white;
+            padding: 3rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .form-section {
+            background-color: white;
+            padding: 3rem 0;
+        }
+        .explanation-section {
+            background-color: #f8f9fa;
+            padding: 3rem 0;
+        }
+        .calendar-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .url-input-wrapper {
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .url-input-wrapper input {
+            width: 100%;
+        }
+        .filter-inputs-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .filter-inputs-wrapper > div {
+            flex: 1 1 50%;
+            min-width: 0;
+        }
+        .filter-inputs-wrapper > div input {
+            width: 100%;
+        }
+        @media (min-width: 576px) {
+            .calendar-input-group {
+                flex-direction: row;
+                gap: 0.75rem;
+            }
+            .url-input-wrapper {
+                flex: 1 1 50%;
+                min-width: 0;
+            }
+            .filter-inputs-wrapper {
+                flex: 1 1 50%;
+                gap: 0.75rem;
+            }
+            .filter-inputs-wrapper > div {
+                flex: 1 1 0%;
+                min-width: 0;
+            }
+            input.form-control {
+                font-size: 1rem;
+                padding: 0.75rem;
+            }
+        }
+        @media (min-width: 992px) {
+            .form-section {
+                padding: 4rem 0;
+            }
+            .form-container {
+                max-width: 700px;
+                margin: 0 auto;
+            }
+        }
+        .card {
+            border: 1px solid #dee2e6;
+        }
+        .btn-group-custom {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
 </head>
 <body>
 
 <main>
-    <div class="container col-xl-10 col-xxl-8 px-4 py-5">
-        <div class="row align-items-center g-lg-5 py-5">
-            <div class="col-lg-7 text-center text-lg-start">
-                <h1 class="display-4 fw-bold lh-1 mb-3">Simple iCal filtering</h1>
-                <p class="col-lg-10 fs-4">Filter unwanted iCal events. Load an existing link to edit, or craft new filters below.</p>
-                <p class="col-lg-10 fs-4">Add one or more calendar subscription URLs with their allow/block filters, then subscribe to the generated link. You can optionally create a short link for the bundle.</p>
+    <!-- Header Section -->
+    <section class="header-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="display-4 fw-bold lh-1 mb-3">Simple iCal filtering</h1>
+                    <p class="fs-5 mb-2">Filter unwanted iCal events. Load an existing link to edit, or craft new filters below.</p>
+                    <p class="fs-5">Add one or more calendar subscription URLs with their allow/block filters, then subscribe to the generated link. You can optionally create a short link for the bundle.</p>
+                </div>
             </div>
-            <div class="col-md-10 mx-auto col-lg-5">
+        </div>
+    </section>
+
+    <!-- Form Section -->
+    <section class="form-section">
+        <div class="container">
+            <div class="form-container">
                 <form class="p-4 p-md-5 border rounded-3 bg-light">
-                    <div class="form-floating mb-3">
-                        <input type="url" class="form-control" id="existinglink">
-                        <label for="existinglink">Existing filtered link</label>
-                        <small class="text-muted">Paste a filtered link to load and edit it</small>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary mb-3 w-100" onclick="loadExistingLink()">Load link into editor</button>
-                    <hr class="my-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h2 class="h5 mb-0">Calendars (max 5)</h2>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCalendarRow()">Add</button>
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCalendarRow()">Remove last</button>
+                    <!-- Load Existing Link -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Load Existing Link (Optional)</h5>
+                        <div class="form-floating mb-2">
+                            <input type="url" class="form-control" id="existinglink">
+                            <label for="existinglink">Existing filtered link</label>
                         </div>
+                        <small class="text-muted d-block mb-3">Paste a filtered link to load and edit it</small>
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="loadExistingLink()">Load link into editor</button>
                     </div>
-                    <div id="multi-cal-list" class="mb-3"></div>
-                    <div class="form-check mb-3">
+
+                    <hr class="my-4">
+
+                    <!-- Calendars Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Calendars (max 5)</h5>
+                            <div class="btn-group-custom">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCalendarRow()">Add</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCalendarRow()">Remove</button>
+                            </div>
+                        </div>
+                        <div id="multi-cal-list"></div>
+                    </div>
+
+                    <!-- Short Link Checkbox -->
+                    <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="multishorten">
                         <label class="form-check-label" for="multishorten">
                             Create short link for calendar(s)
                         </label>
                     </div>
-                    <button type="button" class="w-100 btn btn-lg btn-success mb-3" onclick="generateCombined()">Generate</button>
-                    <div class="form-floating mb-3">
-                        <input type="url" class="form-control" id="combinedOutput" readonly>
-                        <label for="combinedOutput">Calendar link (short or downloadable)</label>
+
+                    <!-- Generate Button -->
+                    <button type="button" class="w-100 btn btn-lg btn-success mb-4" onclick="generateCombined()">Generate</button>
+
+                    <!-- Output Section -->
+                    <div class="mb-4">
+                        <div class="form-floating mb-2">
+                            <input type="url" class="form-control" id="combinedOutput" readonly>
+                            <label for="combinedOutput">Calendar link (short or downloadable)</label>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100 mb-2" id="copyCombined" onclick="copyCombined()" disabled>Copy link</button>
+                        <small class="text-muted d-block">When not using short links a temporary download link is generated for the merged calendar.</small>
                     </div>
-                    <button type="button" class="btn btn-primary w-100" id="copyCombined" onclick="copyCombined()" disabled>Copy link</button>
-                    <small class="text-muted d-block mt-2">When not using short links a temporary download link is generated for the merged calendar.</small>
                 </form>
             </div>
-            <div class="col-lg-7 text-center text-lg-start">
-                <p class="col-lg-6 fs-4">How does it work?</p>
-                 <p class="lead text-muted">On every request the remote iCal file is fetched directly from the remote
-                      server and parsed, after that the calendar is returned as-is with only events that match the allowed
-                      keywords and do not contain any of the blocked words. All the data about the request is stored in
-                      the URL and is never stored on the server. If you enable short links, request data is cached
-                      locally to provide a shorter URL. You can also combine up to five calendars with their own filters and optionally request a short link for the bundle.</p>
-                <p class="lead text-muted">The code is open source under MIT license and available on <a
-                        href="https://github.com/OpenCirclePkgs/fical">GitHub</a></p>
-             </div>
-         </div>
-     </div>
+        </div>
+    </section>
 
-
+    <!-- Explanation Section -->
+    <section class="explanation-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h3 class="mb-3">How does it work?</h3>
+                    <p class="lead text-muted mb-3">On every request the remote iCal file is fetched directly from the remote server and parsed, after that the calendar is returned as-is with only events that match the allowed keywords and do not contain any of the blocked words. All the data about the request is stored in the URL and is never stored on the server. If you enable short links, request data is cached locally to provide a shorter URL. You can also combine up to five calendars with their own filters and optionally request a short link for the bundle.</p>
+                    <p class="lead text-muted">The code is open source under MIT license and available on <a href="https://github.com/OpenCirclePkgs/fical">GitHub</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
@@ -117,14 +230,11 @@
         }
         const idx = multiCalList.length
         const container = document.createElement("div")
-        container.className = "card p-3 mb-2"
+        container.className = "card p-3 mb-3"
         container.id = `multi-${idx}`
 
-        const row = document.createElement("div")
-        row.className = "row g-2"
-
         const urlCol = document.createElement("div")
-        urlCol.className = "col-md-5"
+        urlCol.className = "url-input-wrapper"
         const urlInput = document.createElement("input")
         urlInput.type = "url"
         urlInput.className = "form-control"
@@ -134,8 +244,10 @@
         urlInput.oninput = onInputHandler
         urlCol.appendChild(urlInput)
 
+        const filterRow = document.createElement("div")
+        filterRow.className = "filter-inputs-wrapper"
+
         const allowCol = document.createElement("div")
-        allowCol.className = "col-md-3"
         const allowInput = document.createElement("input")
         allowInput.type = "text"
         allowInput.className = "form-control"
@@ -146,7 +258,6 @@
         allowCol.appendChild(allowInput)
 
         const blockCol = document.createElement("div")
-        blockCol.className = "col-md-3"
         const blockInput = document.createElement("input")
         blockInput.type = "text"
         blockInput.className = "form-control"
@@ -156,11 +267,14 @@
         blockInput.oninput = onInputHandler
         blockCol.appendChild(blockInput)
 
-        row.appendChild(urlCol)
-        row.appendChild(allowCol)
-        row.appendChild(blockCol)
+        filterRow.appendChild(allowCol)
+        filterRow.appendChild(blockCol)
 
-        container.appendChild(row)
+        const mainRow = document.createElement("div")
+        mainRow.className = "calendar-input-group"
+        mainRow.appendChild(urlCol)
+        mainRow.appendChild(filterRow)
+        container.appendChild(mainRow)
         document.getElementById("multi-cal-list").appendChild(container)
         multiCalList.push(container)
     }
@@ -238,7 +352,6 @@
     }
 
     function base64ToBase64url(input) {
-      // Replace non-url compatible chars with base64url standard chars and remove leading =
       return input
         .replace(/\+/g, '_')
         .replace(/\//g, '-')
