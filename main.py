@@ -1,12 +1,12 @@
-import json
 import os
 import secrets
 import sqlite3
 from typing import Iterable, List
+import json
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 import requests
 from ics import Calendar
 import base64
@@ -117,6 +117,13 @@ def _combine_calendars(inputs: Iterable["CalendarInput"]) -> Calendar:
     return combined
 
 
+def _validate_combined_request(request: "CombinedCalendarRequest") -> None:
+    if not request.calendars:
+        raise HTTPException(status_code=400, detail="At least one calendar is required.")
+    if len(request.calendars) > 5:
+        raise HTTPException(status_code=400, detail="Maximum of 5 calendars are allowed per request.")
+
+
 def _get_db_path() -> str:
     return os.environ.get("FICAL_DB_PATH", _DB_DEFAULT_PATH)
 
@@ -162,6 +169,16 @@ class CombinedCalendarRequest(BaseModel):
     short: bool = False
 
 
+def _request_from_payload(payload: str) -> CombinedCalendarRequest:
+    raw_json = _decode_b64url_param(payload, "payload")
+    try:
+        data = CombinedCalendarRequest.model_validate_json(raw_json)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail="Invalid payload data.") from exc
+    data.short = False
+    return data
+
+
 @app.get("/")
 def index():
     return FileResponse('index.html')
@@ -169,16 +186,23 @@ def index():
 
 @app.post("/calendars/combined.ics")
 async def combined_calendar(request: CombinedCalendarRequest, req: Request):
-    if not request.calendars:
-        raise HTTPException(status_code=400, detail="At least one calendar is required.")
-    if len(request.calendars) > 5:
-        raise HTTPException(status_code=400, detail="Maximum of 5 calendars are allowed per request.")
+    _validate_combined_request(request)
 
     if request.short:
         key = _save_short_payload(request.model_dump_json())
         base = str(req.base_url).rstrip("/")
         return {"short": f"{base}/s/{key}"}
 
+    cal = _combine_calendars(request.calendars)
+    return Response(content=cal.serialize(), media_type="text/calendar")
+
+
+@app.get("/calendars/combined.ics")
+async def combined_calendar_from_payload(payload: str = Query(default="")):
+    if not payload:
+        raise HTTPException(status_code=400, detail="Missing payload.")
+    request = _request_from_payload(payload)
+    _validate_combined_request(request)
     cal = _combine_calendars(request.calendars)
     return Response(content=cal.serialize(), media_type="text/calendar")
 
