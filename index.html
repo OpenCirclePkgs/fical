@@ -403,7 +403,7 @@
             const binary = atob(b64)
             const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
             return sharedTextDecoder.decode(bytes)
-        } catch (_) {
+        } catch (error) {
             return ""
         }
     }
