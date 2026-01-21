@@ -193,11 +193,11 @@ async def resolve_short_link(key: str):
 
 @app.get("/calendar/{b64url}/{b64allowlist}/filtered.ics")
 async def get_calendar(
+    req: Request,
     b64url: str,
     b64allowlist: str,
     b64blocklist: str = Query(default=""),
     short: bool = False,
-    req: Request = None,
 ):
     raw_url = _decode_b64url_param(b64url, "calendar URL")
     allowlist_raw = _decode_b64url_param(b64allowlist, "allowlist")

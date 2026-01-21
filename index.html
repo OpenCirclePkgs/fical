@@ -120,18 +120,48 @@
         const container = document.createElement("div")
         container.className = "card p-3 mb-2"
         container.id = `multi-${idx}`
-        container.innerHTML = `
-            <div class="row g-2">
-                <div class="col-md-5">
-                    <input type="url" class="form-control" placeholder="Calendar URL" data-field="url" value="${prefill.url || ""}" oninput="onInputHandler()">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="Allowlist (comma)" data-field="allowlist" value="${prefill.allowlist || ""}" oninput="onInputHandler()">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="Blocklist (comma)" data-field="blocklist" value="${prefill.blocklist || ""}" oninput="onInputHandler()">
-                </div>
-            </div>`
+
+        const row = document.createElement("div")
+        row.className = "row g-2"
+
+        const urlCol = document.createElement("div")
+        urlCol.className = "col-md-5"
+        const urlInput = document.createElement("input")
+        urlInput.type = "url"
+        urlInput.className = "form-control"
+        urlInput.placeholder = "Calendar URL"
+        urlInput.setAttribute("data-field", "url")
+        urlInput.value = prefill.url || ""
+        urlInput.oninput = onInputHandler
+        urlCol.appendChild(urlInput)
+
+        const allowCol = document.createElement("div")
+        allowCol.className = "col-md-3"
+        const allowInput = document.createElement("input")
+        allowInput.type = "text"
+        allowInput.className = "form-control"
+        allowInput.placeholder = "Allowlist (comma)"
+        allowInput.setAttribute("data-field", "allowlist")
+        allowInput.value = prefill.allowlist || ""
+        allowInput.oninput = onInputHandler
+        allowCol.appendChild(allowInput)
+
+        const blockCol = document.createElement("div")
+        blockCol.className = "col-md-3"
+        const blockInput = document.createElement("input")
+        blockInput.type = "text"
+        blockInput.className = "form-control"
+        blockInput.placeholder = "Blocklist (comma)"
+        blockInput.setAttribute("data-field", "blocklist")
+        blockInput.value = prefill.blocklist || ""
+        blockInput.oninput = onInputHandler
+        blockCol.appendChild(blockInput)
+
+        row.appendChild(urlCol)
+        row.appendChild(allowCol)
+        row.appendChild(blockCol)
+
+        container.appendChild(row)
         document.getElementById("multi-cal-list").appendChild(container)
         multiCalList.push(container)
     }
