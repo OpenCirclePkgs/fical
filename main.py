@@ -197,7 +197,6 @@ async def get_calendar(
     b64url: str,
     b64allowlist: str,
     b64blocklist: str = Query(default=""),
-    short: bool = False,
 ):
     raw_url = _decode_b64url_param(b64url, "calendar URL")
     allowlist_raw = _decode_b64url_param(b64allowlist, "allowlist")
@@ -206,9 +205,11 @@ async def get_calendar(
     allowlist = allowlist_raw.split(",")
     blocklist = blocklist_raw.split(",") if blocklist_raw else []
 
+    short_flag = str(req.query_params.get("short", "")).lower() in {"1", "true", "yes", "on"}
+
     request_body = CombinedCalendarRequest(
         calendars=[CalendarInput(url=raw_url, allowlist=allowlist, blocklist=blocklist)],
-        short=short,
+        short=short_flag,
     )
     if request_body.short:
         key = _save_short_payload(request_body.model_dump_json())

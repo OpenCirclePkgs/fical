@@ -95,7 +95,6 @@
                 const encodedAllow = parts[3]
                 const blockParam = url.searchParams.get("b64blocklist") || ""
                 const allowDecoded = decodeFromBase64url(encodedAllow)
-                resetCalendarRows()
                 addCalendarRow({
                     url: decodeFromBase64url(encodedUrl),
                     allowlist: allowDecoded === EMPTY_ALLOWLIST_TOKEN ? "" : allowDecoded,
