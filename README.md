@@ -21,12 +21,9 @@ find it useful as well.
 You can look at the included `docker-compose.yml` for an example how to run it yourself. A functional version is available on https://fical.nikolak.com/
 but it comes without any guarantees of uptime or similar.
 
-Note: During my testing I've noticed that google calendar is being weird, and seems to reject long urls - which are completely within the spec. Google
-seems to impose limit of 256chars for the URL length, which are very easy to reach with the base64 encoding this uses.
+### Short links
 
-I may add a persistent storage for allowing shorter URLs, but for now I do not have a use case for this - if someone wants to contribute it, feel free to do so.
-
-As a workaround URL shortener like bitly or similar will work just fine.
+Set `FICAL_DB_PATH` (optional, defaults to `cache.db`) and POST to `/calendars/combined.ics` with `{"calendars":[{"url":"...","allowlist":["foo"],"blocklist":["bar"]}],"short":true}` to receive a short redirectable link served by `/s/{key}`. Data is cached in sqlite.
 
 # License
 
