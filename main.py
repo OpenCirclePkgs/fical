@@ -192,7 +192,13 @@ async def resolve_short_link(key: str):
 
 
 @app.get("/calendar/{b64url}/{b64allowlist}/filtered.ics")
-async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query(default="")):
+async def get_calendar(
+    b64url: str,
+    b64allowlist: str,
+    b64blocklist: str = Query(default=""),
+    short: bool = False,
+    req: Request = None,
+):
     raw_url = _decode_b64url_param(b64url, "calendar URL")
     allowlist_raw = _decode_b64url_param(b64allowlist, "allowlist")
     blocklist_raw = _decode_b64url_param(b64blocklist, "blocklist") if b64blocklist else ""
@@ -200,5 +206,14 @@ async def get_calendar(b64url: str, b64allowlist: str, b64blocklist: str = Query
     allowlist = allowlist_raw.split(",")
     blocklist = blocklist_raw.split(",") if blocklist_raw else []
 
-    cal = _filtered_calendar_from_url(raw_url, allowlist, blocklist)
+    request_body = CombinedCalendarRequest(
+        calendars=[CalendarInput(url=raw_url, allowlist=allowlist, blocklist=blocklist)],
+        short=short,
+    )
+    if request_body.short:
+        key = _save_short_payload(request_body.model_dump_json())
+        base = str(req.base_url).rstrip("/") if req else ""
+        return {"short": f"{base}/s/{key}"}
+
+    cal = _combine_calendars(request_body.calendars)
     return Response(content=cal.serialize(), media_type="text/calendar")
