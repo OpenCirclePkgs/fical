@@ -2,6 +2,7 @@
 import base64
 import unittest
 from unittest.mock import patch
+import json
 
 from fastapi.testclient import TestClient
 
@@ -139,3 +140,16 @@ class CalendarTests(unittest.TestCase):
             resolve_resp = self.client.get(f"/s/{key}")
             self.assertEqual(resolve_resp.status_code, 200)
             self.assertIn("SUMMARY:测试 event", resolve_resp.text)
+
+    @patch("main._is_private_host", return_value=False)
+    @patch("main.requests.get")
+    def test_get_combined_via_payload_query(self, mock_get, _):
+        mock_get.return_value = type("Resp", (), {"text": ICS_SAMPLE})
+        body = {
+            "calendars": [{"url": "https://example.com/one.ics", "allowlist": ["测试"], "blocklist": []}],
+            "short": False,
+        }
+        payload = _encode_unpadded(json.dumps(body))
+        resp = self.client.get(f"/calendars/combined.ics?payload={payload}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("SUMMARY:测试 event", resp.text)

@@ -337,8 +337,9 @@
             document.getElementById("combinedOutput").value = data.short
         } else {
             const blob = await resp.blob()
-            const url = URL.createObjectURL(blob)
-            document.getElementById("combinedOutput").value = url
+            const url = new URL("/calendars/combined.ics", window.location.origin)
+            url.searchParams.set("payload", encodeToBase64url(JSON.stringify(payload)))
+            document.getElementById("combinedOutput").value = url.toString()
         }
         document.getElementById("copyCombined").disabled = !document.getElementById("combinedOutput").value
     }
