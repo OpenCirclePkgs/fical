@@ -208,11 +208,35 @@
                 const encodedAllow = parts[3]
                 const blockParam = url.searchParams.get("b64blocklist") || ""
                 const allowDecoded = decodeFromBase64url(encodedAllow)
+                resetCalendarRows()
                 addCalendarRow({
                     url: decodeFromBase64url(encodedUrl),
                     allowlist: allowDecoded === EMPTY_ALLOWLIST_TOKEN ? "" : allowDecoded,
                     blocklist: blockParam ? decodeFromBase64url(blockParam) : ""
                 })
+                onInputHandler()
+            } else if (url.searchParams.has("payload")) {
+                const decoded = decodeFromBase64url(url.searchParams.get("payload") || "")
+                let data
+                try {
+                    data = JSON.parse(decoded)
+                } catch (_) {
+                    alert("Could not parse link")
+                    return
+                }
+                if (!data || !Array.isArray(data.calendars) || !data.calendars.length) {
+                    alert("Could not parse link")
+                    return
+                }
+                resetCalendarRows()
+                data.calendars.forEach(cal => {
+                    addCalendarRow({
+                        url: cal.url || "",
+                        allowlist: (cal.allowlist || []).join(","),
+                        blocklist: (cal.blocklist || []).join(",")
+                    })
+                })
+                document.getElementById("multishorten").checked = !!data.short
                 onInputHandler()
             } else if (parts.length >= 3 && parts[1] === "s") {
                 document.getElementById("combinedOutput").value = link

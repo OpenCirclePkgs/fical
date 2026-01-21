@@ -175,6 +175,9 @@ def _request_from_payload(payload: str) -> CombinedCalendarRequest:
         data = CombinedCalendarRequest.model_validate_json(raw_json)
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail="Invalid payload data.") from exc
+    for cal in data.calendars:
+        cal.allowlist = [w or EMPTY_ALLOWLIST_TOKEN for w in cal.allowlist] or [EMPTY_ALLOWLIST_TOKEN]
+        cal.blocklist = [w for w in cal.blocklist if w]
     data.short = False
     return data
 

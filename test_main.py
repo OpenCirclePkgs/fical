@@ -121,6 +121,26 @@ class CalendarTests(unittest.TestCase):
 
     @patch("main._is_private_host", return_value=False)
     @patch("main.requests.get")
+    def test_loads_combined_payload_with_multiple_calendars(self, mock_get, _):
+        mock_get.side_effect = [
+            type("Resp", (), {"text": ICS_SAMPLE}),
+            type("Resp", (), {"text": ICS_SAMPLE_TWO}),
+        ]
+        body = {
+            "calendars": [
+                {"url": "https://example.com/one.ics", "allowlist": [], "blocklist": []},
+                {"url": "https://example.com/two.ics", "allowlist": ["event"], "blocklist": []},
+            ],
+            "short": False,
+        }
+        payload = _encode_unpadded(json.dumps(body))
+        resp = self.client.get(f"/calendars/combined.ics?payload={payload}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("SUMMARY:测试 event", resp.text)
+        self.assertIn("SUMMARY:event two", resp.text)
+
+    @patch("main._is_private_host", return_value=False)
+    @patch("main.requests.get")
     def test_short_link_flow(self, mock_get, _):
         mock_get.return_value = type("Resp", (), {"text": ICS_SAMPLE})
         import os
